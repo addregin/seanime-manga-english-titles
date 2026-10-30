@@ -1,4 +1,4 @@
-// Manga English Titles v1.7 - Seanime plugin (DISPLAY ONLY, no hooks) - with tray on/off switch
+// Manga English Titles v1.8 - Seanime plugin (DISPLAY ONLY, no hooks) - with tray on/off switch
 //
 // Entry page: reads the manga's data straight from the page
 //   ([data-manga-entry-page] -> data-media JSON: id, title, synonyms),
@@ -230,25 +230,60 @@ function init() {
         // ---------------- Cards ----------------
         const CARD_SEL = '[data-media-entry-card-container="true"][data-media-type="manga"]'
 
+        // Anti-flicker: while a card has not been processed yet (no data-mget attribute) its title is
+        // hidden by CSS, then shown once the plugin has swapped it. A 0.6s CSS animation reveals the
+        // title anyway, so a title can never stay hidden if the plugin is slow or errors.
+        const FLICKER_CSS =
+            "@keyframes mget-reveal{to{visibility:visible}}" +
+            CARD_SEL + ":not([data-mget]) [data-media-entry-card-title-section-title=\"true\"]" +
+            "{visibility:hidden;animation:mget-reveal 0s linear 0.6s forwards}"
+        let styleEl = null
+        const installStyle = async () => {
+            if (styleEl) return
+            try {
+                if (typeof ctx.dom.addStyle === "function") {
+                    styleEl = await ctx.dom.addStyle(FLICKER_CSS)
+                } else {
+                    const head = await ctx.dom.queryOne("head")
+                    const el = await ctx.dom.createElement("style")
+                    if (head && el) {
+                        el.setText(FLICKER_CSS)
+                        head.append(el)
+                        styleEl = el
+                    }
+                }
+                log("anti-flicker style installed:", !!styleEl)
+            } catch (err) {
+                log("could not install anti-flicker style:", String(err))
+            }
+        }
+        const removeStyle = () => {
+            try { if (styleEl && styleEl.remove) styleEl.remove() } catch (err) { /* optional */ }
+            styleEl = null
+        }
+
+        // Cards are processed in parallel (one batch of calls) instead of one at a time.
         const fixCards = async (cards) => {
             if (!on) return
-            for (const c of cards) {
+            await Promise.all(toArrLike(cards).map(async (c) => {
                 try {
                     const id = await c.getAttribute("data-media-id")
                     const info = id ? map[String(id)] : null
-                    if (!info) continue
+                    if (!info || !info.en) { c.setAttribute("data-mget", "0"); return }
                     const p = await c.queryOne('[data-media-entry-card-title-section-title="true"]')
-                    if (!p) continue
-                    const t = String((await p.getText()) || "").trim()
-                    if (info.en && t && t !== info.en &&
-                        (info.orig.indexOf(t) !== -1 || (info.cands || []).indexOf(t) !== -1)) {
-                        p.setText(info.en)
-                        log("card", id, ":", t, "=>", info.en)
+                    if (p) {
+                        const t = String((await p.getText()) || "").trim()
+                        if (t && t !== info.en &&
+                            (info.orig.indexOf(t) !== -1 || (info.cands || []).indexOf(t) !== -1)) {
+                            p.setText(info.en)
+                            log("card", id, ":", t, "=>", info.en)
+                        }
                     }
+                    c.setAttribute("data-mget", "1")
                 } catch (err) {
                     log("card error:", String(err))
                 }
-            }
+            }))
         }
 
         // Put the original titles back (used when switched off)
@@ -299,7 +334,7 @@ function init() {
             enabledState.set(on)
             try { $storage.set("mget.enabled", on) } catch (err) { /* optional */ }
             log("enabled:", on)
-            if (on) applyAll(); else revertAll()
+            if (on) { installStyle(); applyAll() } else { removeStyle(); revertAll() }
         })
         const onPick = ctx.eventHandler("mget-pick", (e) => {
             const cur = trayEntry.get()
@@ -348,6 +383,7 @@ function init() {
 
         ctx.dom.onReady(async () => {
             ctx.screen.loadCurrent()
+            if (on) await installStyle()   // install before the collection loads so cards are hidden early
             await loadCollection()
 
             ctx.dom.observe('[data-media-page-header-entry-details-title-container="true"]', () => { fixEntry() })

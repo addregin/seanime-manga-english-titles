@@ -1,21 +1,22 @@
 {
     "id": "manga-english-titles",
     "name": "Manga English Titles",
-    "version": "1.0.0",
-    "manifestURI": "",
+    "version": "1.8.0",
+    "manifestURI": "https://raw.githubusercontent.com/addregin/seanime-manga-english-titles/main/manga-english-titles.json",
     "language": "javascript",
     "type": "plugin",
-    "description": "Shows the English synonym as the manga title (AniList and custom sources).",
-    "author": "you",
+    "description": "Shows an English title for your manga (entry pages and cards), with a tray on/off switch and a per-manga title chooser. Display only.",
+    "author": "addregin",
     "icon": "",
-    "website": "",
-    "readme": "",
+    "website": "https://github.com/addregin/seanime-manga-english-titles",
+    "readme": "https://raw.githubusercontent.com/addregin/seanime-manga-english-titles/main/README.md",
     "notes": "",
     "lang": "multi",
-    "payloadURI": "C:/Users/addre/Downloads/Seanime Manga Title/manga-english-titles.js",
+    "payloadURI": "https://raw.githubusercontent.com/addregin/seanime-manga-english-titles/main/manga-english-titles.js",
     "plugin": {
         "version": "1",
-        "permissions": {}
-    },
-    "isDevelopment": true
+        "permissions": {
+            "scopes": ["storage"]
+        }
+    }
 }
