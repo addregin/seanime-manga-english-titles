@@ -1,0 +1,21 @@
+{
+    "id": "manga-english-titles",
+    "name": "Manga English Titles",
+    "version": "1.0.0",
+    "manifestURI": "",
+    "language": "javascript",
+    "type": "plugin",
+    "description": "Shows the English synonym as the manga title (AniList and custom sources).",
+    "author": "you",
+    "icon": "",
+    "website": "",
+    "readme": "",
+    "notes": "",
+    "lang": "multi",
+    "payloadURI": "C:/Users/addre/Downloads/Seanime Manga Title/manga-english-titles.js",
+    "plugin": {
+        "version": "1",
+        "permissions": {}
+    },
+    "isDevelopment": true
+}
